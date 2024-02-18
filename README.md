@@ -7,19 +7,7 @@ Many commands differ from original implementation but used it as inspiration.
 
 This is an Arduino library for ESC/POS point of sale receipt printers. This
 library is based on the Adafruit Thermal library but is not compatible with the
-Adafruit thermal printer. This library has been tested with a USB thermal
-receipt printer and the following library on a Teensy 3.6 USB host port.
-
-This library works with the following USB Printer drivers for the following
-Arduino USB host stacks.
-
-* [Teensy 3.6 USB host](https://github.com/gdsports/USBPrinter_t36)
-* [USB Host Shield 2.0](https://github.com/gdsports/USBPrinter_uhs2)
-* [USB Host Library for SAMD](https://github.com/gdsports/USBPrinter_uhls)
-
-SAMD boards include the Arduino Zero, the Arduino MKR family, many SparkFun
-and Adafruit SAMD21, SAMD51, M0, and M4 boards. The SAMD processors have
-built-in USB host and device hardware so a shield is not used.
+Adafruit thermal printer. 
 
 The following is used as reference for ESC/POS commands.
 
