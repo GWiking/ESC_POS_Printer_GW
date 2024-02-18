@@ -1,6 +1,11 @@
 # ESC_POS_Printer
 Arduino ESC POS printer library
 
+*********************************************************************************
+* Customized by GW 2023 for EP802TM printer, using HW serial port.             *
+* Many commands differ from original implementation but used it as inspiration. *
+********************************************************************************/
+
 This is an Arduino library for ESC/POS point of sale receipt printers. This
 library is based on the Adafruit Thermal library but is not compatible with the
 Adafruit thermal printer. This library has been tested with a USB thermal
