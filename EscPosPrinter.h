@@ -61,7 +61,7 @@ public:
         init();
 
     bool hasPaper();
-    int getStatus(int stateIn, byte *statusArray);
+    int getStatus(int stateIn, byte *statusArray, size_t statusArrayLength);
     // int checkPaperInChute(int stateIn);
     int8_t pinRX;
     int8_t pinTX;

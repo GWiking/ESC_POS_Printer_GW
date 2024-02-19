@@ -100,11 +100,11 @@ Definition of sendStart
 
 -Width multiplier-
 0x1D = Group separator GS
-0x77 = 'w' = Width Select 
+0x77 = 'w' = Width Select
 0x03 = Width
 -Height in dots-
 0x1D  = Group separator GS
-0x68  = 'h' = Height Select 
+0x68  = 'h' = Height Select
 0x78 = Height
 -HRI, (Human Readable Interpretation) FONT-
 0x1D = Group separator GS
@@ -125,7 +125,7 @@ https://escpos.readthedocs.io/en/latest/imaging.html#barcode-generator-1-1d-6b-m
 
 void EscPosPrinter::setupBarcode()
 {
-  //char sendStart[15] = {0x1D, 0x77, 0x04, 0x1D, 0x68, 0x78, 0x1D, 0x66, 0x01, 0x1D, 0x48, 0x00, 0x1D, 0x6B, 0x05};
+  // char sendStart[15] = {0x1D, 0x77, 0x04, 0x1D, 0x68, 0x78, 0x1D, 0x66, 0x01, 0x1D, 0x48, 0x00, 0x1D, 0x6B, 0x05};
   char sendStart[9] = {0x1D, 0x77, 0x04, 0x1D, 0x68, 0x78, 0x1D, 0x6B, 0x05};
 
   for (size_t i = 0; i < sizeof(sendStart); i++)
@@ -274,7 +274,7 @@ void EscPosPrinter::underlineOff()
 
 void EscPosPrinter::setRelPos()
 {
-  //writeBytes(ASCII_ESC, 0x5C, 0x64, 0x00);
+  // writeBytes(ASCII_ESC, 0x5C, 0x64, 0x00);
   writeBytes(ASCII_ESC, 0x5C, 0x02, 0x20);
 }
 
@@ -313,114 +313,124 @@ bool EscPosPrinter::hasPaper()
   return !(status & 0b00001100);
 }
 
-int EscPosPrinter::getStatus(int stateIn, byte *statusArray) // Possible to ask about more faults but this should be enough, 0x01,0x02,0x05 and not 0x03,0x04
+int EscPosPrinter::getStatus(int stateIn, byte *statusArray, size_t statusArrayLength) // Possible to ask about more faults but this should be enough, 0x01,0x02,0x05 and not 0x03,0x04
 {
   int stateOut = stateIn;
-  switch (statusState)
+  if (statusArrayLength >= 3)
   {
-  case 0:
-  {
-    clearRxBuffer();
-    statusArray[0] = 0;
-    statusArray[1] = 0;
-    statusArray[2] = 0;
-    writeBytes(0x10, 0x04, 0x01);
-    statusTs = millis();
-    statusState++;
-  }
-  break;
-
-  case 1:
-  {
-    statusState = waitCase(statusTs, 10, statusState);
-  }
-  break;
-
-  case 2:
-  {
-    if (comPort->available())
+    switch (statusState)
     {
-      byte statusByte = comPort->read();
-      printlnV(statusByte, HEX);
-      statusArray[0] = statusByte;
-      if (statusByte == 0x16) // OK
+    case 0:
+    {
+      clearRxBuffer();
+      for (size_t i = 0; i < statusArrayLength; i++)
       {
-        statusState = 10; // Go to chute sensor.
+        statusArray[i] = 0;
       }
-      else
+      writeBytes(0x10, 0x04, 0x01);
+      statusTs = millis();
+      statusState++;
+    }
+    break;
+
+    case 1:
+    {
+      statusState = waitCase(statusTs, 10, statusState);
+    }
+    break;
+
+    case 2:
+    {
+      if (comPort->available())
       {
-        writeBytes(0x10, 0x04, 0x02);
-        statusTs = millis();
-        statusState++;
+        byte statusByte = comPort->read();
+        printlnV(statusByte, HEX);
+        statusArray[0] = statusByte;
+        if (statusByte == 0x16) // OK
+        {
+          statusState = 10; // Go to chute sensor.
+        }
+        else
+        {
+          writeBytes(0x10, 0x04, 0x02);
+          statusTs = millis();
+          statusState++;
+        }
+      }
+      else if (millis() - statusTs > 200)
+      {
+        debugD("Com error status printer");
+        stateOut = -99; // No answer
+        statusState = 0;
       }
     }
-    else if (millis() - statusTs > 200)
+    break;
+
+    case 3:
     {
-      debugD("Com error status printer");
-      stateOut = -99; // No answer
-      statusState = 0;
+      statusState = waitCase(statusTs, 10, statusState);
+    }
+    break;
+
+    case 4:
+    {
+      if (comPort->available())
+      {
+        byte statusByte = comPort->read();
+        debugD("ErrorCode:");
+        printlnD(statusByte, HEX);
+        statusArray[1] = statusByte;
+        stateOut = stateIn + 1;
+        statusState = 0;
+      }
+      else if (millis() - statusTs > 200)
+      {
+        debugD("Com error status printer");
+        stateOut = -99; // No answer
+        statusState = 0;
+      }
+    }
+    break;
+
+    case 10:
+    {
+      writeBytes(0x10, 0x04, 0x05);
+      statusTs = millis();
+      statusState++;
+    }
+    break;
+
+    case 11:
+    {
+      statusState = waitCase(statusTs, 10, statusState);
+    }
+    break;
+
+    case 12:
+    {
+      if (comPort->available())
+      {
+        byte statusByte = comPort->read();
+        statusArray[2] = statusByte;
+        printlnV(statusByte, HEX);
+        statusState = 0;
+        stateOut = stateIn + 1;
+      }
+      else if (millis() - statusTs > 200)
+      {
+        debugD("Com error status printer chute");
+        stateOut = -99; // No answer
+        statusState = 0;
+      }
+    }
+    break;
     }
   }
-  break;
-
-  case 3:
+  else
   {
-    statusState = waitCase(statusTs, 10, statusState);
-  }
-  break;
-
-  case 4:
-  {
-    if (comPort->available())
-    {
-      byte statusByte = comPort->read();
-      debugD("ErrorCode:");
-      printlnD(statusByte, HEX);
-      statusArray[1] = statusByte;
-      stateOut = stateIn + 1;
-      statusState = 0;
-    }
-    else if (millis() - statusTs > 200)
-    {
-      debugD("Com error status printer");
-      stateOut = -99; // No answer
-      statusState = 0;
-    }
-  }
-  break;
-
-  case 10:
-  {
-    writeBytes(0x10, 0x04, 0x05);
-    statusTs = millis();
-    statusState++;
-  }
-  break;
-
-  case 11:
-  {
-    statusState = waitCase(statusTs, 10, statusState);
-  }
-  break;
-
-  case 12:
-  {
-    if (comPort->available())
-    {
-      byte statusByte = comPort->read();
-      statusArray[2] = statusByte;
-      printlnV(statusByte, HEX);
-      statusState = 0;
-      stateOut = stateIn + 1;
-    }
-    else if (millis() - statusTs > 200)
-    {
-      debugD("Com error status printer chute");
-      stateOut = -99; // No answer
-      statusState = 0;
-    }
-  }
-  break;
+    debugD("Length error status array");
+    stateOut = -99; // No answer
+    statusState = 0;
   }
 
   return (stateOut);
