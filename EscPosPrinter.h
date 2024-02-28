@@ -62,6 +62,7 @@ public:
 
     bool hasPaper();
     int getStatus(int stateIn, byte *statusArray, size_t statusArrayLength);
+    int paperLowStatus(int stateIn, bool &paperStatus);
     // int checkPaperInChute(int stateIn);
     int8_t pinRX;
     int8_t pinTX;
@@ -77,6 +78,7 @@ private:
     void clearRxBuffer();
     int statusState = 0;
     uint32_t statusTs;
+    int paperLowState = 0;
 };
 
 #endif // EscPosPrinter_H
