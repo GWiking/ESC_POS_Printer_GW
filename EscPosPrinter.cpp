@@ -424,6 +424,13 @@ int EscPosPrinter::getStatus(int stateIn, byte *statusArray, size_t statusArrayL
       }
     }
     break;
+
+    default:
+    {
+      stateOut = -99;
+      statusState = 0;
+    }
+    break;
     }
   }
   else
@@ -433,6 +440,61 @@ int EscPosPrinter::getStatus(int stateIn, byte *statusArray, size_t statusArrayL
     statusState = 0;
   }
 
+  return (stateOut);
+}
+
+int EscPosPrinter::paperLowStatus(int stateIn, bool &paperLow)
+{
+  int stateOut = stateIn;
+
+  switch (paperLowState)
+  {
+  case 0:
+  {
+    clearRxBuffer();
+    writeBytes(0x10, 0x04, 0x04);
+    statusTs = millis();
+    paperLowState++;
+  }
+  break;
+
+  case 1:
+  {
+    paperLowState = waitCase(statusTs, 10, paperLowState);
+  }
+  break;
+
+  case 2:
+  {
+    if (comPort->available())
+    {
+      byte statusByte = comPort->read();
+      printlnV(statusByte, HEX);
+      if (statusByte == 0x12)
+      {
+        paperLow = false;
+      }
+      else
+      {
+        paperLow = true;
+      }
+      stateOut = stateIn + 1;
+      paperLowState = 0;
+    }
+    else if (millis() - statusTs > 200)
+    {
+      debugD("Com error status printer");
+      stateOut = -99; // No answer
+      paperLowState = 0;
+    }
+  }
+  break;
+  default:
+  {
+    stateOut = -99;
+    paperLowState = 0;
+  }
+  }
   return (stateOut);
 }
 
