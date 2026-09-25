@@ -85,7 +85,6 @@ size_t EscPosPrinter::write(uint8_t c)
 
 void EscPosPrinter::test()
 {
-  println(F("Hello World!"));
   feed(2);
 }
 
@@ -344,7 +343,6 @@ int EscPosPrinter::getStatus(int stateIn, byte *statusArray, size_t statusArrayL
       if (comPort->available())
       {
         byte statusByte = comPort->read();
-        printlnV(statusByte, HEX);
         statusArray[0] = statusByte;
         if (statusByte == 0x16) // OK
         {
@@ -359,7 +357,6 @@ int EscPosPrinter::getStatus(int stateIn, byte *statusArray, size_t statusArrayL
       }
       else if (millis() - statusTs > 200)
       {
-        debugD("Com error status printer");
         stateOut = -99; // No answer
         statusState = 0;
       }
@@ -377,15 +374,12 @@ int EscPosPrinter::getStatus(int stateIn, byte *statusArray, size_t statusArrayL
       if (comPort->available())
       {
         byte statusByte = comPort->read();
-        debugD("ErrorCode:");
-        printlnD(statusByte, HEX);
         statusArray[1] = statusByte;
         stateOut = stateIn + 1;
         statusState = 0;
       }
       else if (millis() - statusTs > 200)
       {
-        debugD("Com error status printer");
         stateOut = -99; // No answer
         statusState = 0;
       }
@@ -412,13 +406,11 @@ int EscPosPrinter::getStatus(int stateIn, byte *statusArray, size_t statusArrayL
       {
         byte statusByte = comPort->read();
         statusArray[2] = statusByte;
-        printlnV(statusByte, HEX);
         statusState = 0;
         stateOut = stateIn + 1;
       }
       else if (millis() - statusTs > 200)
       {
-        debugD("Com error status printer chute");
         stateOut = -99; // No answer
         statusState = 0;
       }
@@ -435,7 +427,6 @@ int EscPosPrinter::getStatus(int stateIn, byte *statusArray, size_t statusArrayL
   }
   else
   {
-    debugD("Length error status array");
     stateOut = -99; // No answer
     statusState = 0;
   }
@@ -469,7 +460,6 @@ int EscPosPrinter::paperLowStatus(int stateIn, bool &paperLow)
     if (comPort->available())
     {
       byte statusByte = comPort->read();
-      printlnV(statusByte, HEX);
       if (statusByte == 0x12)
       {
         paperLow = false;
@@ -483,7 +473,6 @@ int EscPosPrinter::paperLowStatus(int stateIn, bool &paperLow)
     }
     else if (millis() - statusTs > 200)
     {
-      debugD("Com error status printer");
       stateOut = -99; // No answer
       paperLowState = 0;
     }

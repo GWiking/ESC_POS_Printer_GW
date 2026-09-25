@@ -19,7 +19,6 @@
 #define EscPosPrinter_H
 
 #include "Arduino.h"
-#include "SerialDebug.h"
 #include "tools.h"
 
 class EscPosPrinter : public Print
